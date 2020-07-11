@@ -53,8 +53,8 @@ html[mode=dark] {
   }
   overflow: auto;
   .lineno {
-    margin: .8rem 0rem;
-    padding: 0 .5rem;
+    margin: 1.2rem 0;
+    padding: 0 .7rem 0 .9rem;
     min-width: 2.2rem;
     text-align: right;
     color: var(--highlight-lineno-color);
@@ -126,7 +126,7 @@ div {
       display: none;
     }
     td.rouge-code {
-      padding: .8rem 1rem;
+      padding: 1.1rem;
     }
   }
 }

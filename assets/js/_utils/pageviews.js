@@ -161,20 +161,28 @@ var PvCache = (function() {
 })(); /* PvCache */
 
 
-function fetchOriginPageviews(pvData) {
-  if (pvData === undefined) {
+function fetchOriginPageviews() {
+  /* pvCacheEnabled › see: /assets/js/data/_pv-config.js */
+  if (!pvCacheEnabled) {
     return;
   }
-  displayPageviews(pvData);
-  PvCache.saveOriginCache(JSON.stringify(pvData));
+
+  fetch('/assets/js/data/pageviews.json')
+    .then(response => response.json())
+    .then(data => {
+      if (PvCache.isProxyCache() && PvCache.newerThan(data)) {
+        return;
+      }
+      displayPageviews(data);
+      PvCache.saveOriginCache(JSON.stringify(data));
+    });
 }
 
 
 function fetchProxyPageviews() {
-  let proxy = JSON.parse(proxyData); /* see file '/assets/data/pv-data.json' */
   $.ajax({
     type: 'GET',
-    url: proxy.url,
+    url: proxyEndpoint, /* proxyEndpoint › see: /assets/js/data/_pv-config.js */
     dataType: 'jsonp',
     jsonpCallback: "displayPageviews",
     success: function(data, textStatus, jqXHR) {
@@ -192,29 +200,15 @@ $(function() {
   if ($('.pageviews').length > 0) {
 
     PvCache.inspectKeys();
-
     let cache = PvCache.getData();
 
     if (cache) {
+
       if (PvCache.isExpired()) {
-        if (PvCache.isProxyCache() ) {
-          let originPvData = pageviews ? JSON.parse(pageviews) : undefined;
-          if (originPvData) {
-            if (PvCache.newerThan(originPvData)) {
-              displayPageviews(cache);
-            } else {
-              fetchOriginPageviews(originPvData);
-            }
-          }
+        fetchOriginPageviews();
+        fetchProxyPageviews();
 
-          fetchProxyPageviews();
-
-        } else if (PvCache.isOriginCache() ) {
-          fetchOriginPageviews(originPvData);
-          fetchProxyPageviews();
-        }
-
-      } else { /* still valid */
+      } else { /* cache is still valid */
         displayPageviews(cache);
 
         if (PvCache.isOriginCache() ) {
@@ -224,8 +218,7 @@ $(function() {
       }
 
     } else {
-      let originPvData = pageviews ? JSON.parse(pageviews) : undefined;
-      fetchOriginPageviews(originPvData);
+      fetchOriginPageviews();
       fetchProxyPageviews();
     }
 
